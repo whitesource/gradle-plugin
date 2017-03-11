@@ -38,9 +38,17 @@ class CollectProjectInfoTask extends DefaultTask {
             def sha1 = ChecksumUtils.calculateSHA1(it)
             if (!addedSha1s.contains(sha1)) {
                 def dependencyInfo = new DependencyInfo()
+                // TODO populate actual artifactId
                 dependencyInfo.setArtifactId(it.name)
+                // TODO populate groupId and version
+                dependencyInfo.setGroupId(it.name)
+                dependencyInfo.setVersion(it.name)
                 dependencyInfo.setSystemPath(it.absolutePath)
                 dependencyInfo.setSha1(sha1)
+
+                // TODO collect transitive dependencies
+                dependencyInfo.getChildren().add()
+
                 projectInfo.getDependencies().add(dependencyInfo)
                 addedSha1s.add(sha1)
             }
