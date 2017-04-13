@@ -3,7 +3,7 @@ apply plugin: 'groovy'
 apply plugin: 'maven'
 
 group = 'org.whitesource'
-version = '0.4-SNAPSHOT'
+version = '0.5'
 
 repositories {
     mavenLocal()
