@@ -19,8 +19,6 @@ class CollectProjectInfoTask extends DefaultTask {
 
     WhitesourceConfiguration wssConfig = project.whitesource
 
-    static addedSha1s = new HashSet<String>()
-
     @TaskAction
     def CollectProjectInfos() {
         logger.lifecycle("processing ${project.name}")
@@ -39,24 +37,27 @@ class CollectProjectInfoTask extends DefaultTask {
             thisProjConf.name in wssConfig.includedConfigurationNames || thisProjConf.name in wssConfig.includedConfigurations*.name
         }
 
-        configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
-            def info = getDependencyInfo(dependency as ResolvedDependency)
-            projectInfo.getDependencies().add(info)
-        }
+        def addedSha1s = new HashSet<String>()
 
+        configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
+            def resolvedDependency = (ResolvedDependency) dependency
+            def sha1 = ChecksumUtils.calculateSHA1(resolvedDependency.moduleArtifacts[0].file)
+            if (!addedSha1s.contains(sha1)) {
+                def info = getDependencyInfo(resolvedDependency)
+                projectInfo.getDependencies().add(info)
+                addedSha1s.add(sha1)
+            }
+        }
         project.projectInfos.add(projectInfo)
     }
 
     def getDependencyInfo(ResolvedDependency dependency) {
         def dependencyInfo = new DependencyInfo()
         def sha1 = ChecksumUtils.calculateSHA1(dependency.moduleArtifacts[0].file)
-        if (!addedSha1s.contains(sha1)) {
-            dependencyInfo.setGroupId(dependency.getModuleGroup())
-            dependencyInfo.setArtifactId(dependency.getModuleName())
-            dependencyInfo.setVersion(dependency.getModuleVersion())
-            dependencyInfo.setSha1(sha1)
-            addedSha1s.add(sha1)
-        }
+        dependencyInfo.setGroupId(dependency.getModuleGroup())
+        dependencyInfo.setArtifactId(dependency.getModuleName())
+        dependencyInfo.setVersion(dependency.getModuleVersion())
+        dependencyInfo.setSha1(sha1)
         dependency.getChildren().each {
             dependencyInfo.getChildren().add(getDependencyInfo(it))
         }
