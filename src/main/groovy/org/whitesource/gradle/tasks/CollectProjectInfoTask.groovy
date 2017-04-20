@@ -37,16 +37,10 @@ class CollectProjectInfoTask extends DefaultTask {
             thisProjConf.name in wssConfig.includedConfigurationNames || thisProjConf.name in wssConfig.includedConfigurations*.name
         }
 
-        def addedSha1s = new HashSet<String>()
-
         configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
             def resolvedDependency = (ResolvedDependency) dependency
-            def sha1 = ChecksumUtils.calculateSHA1(resolvedDependency.moduleArtifacts[0].file)
-            if (!addedSha1s.contains(sha1)) {
-                def info = getDependencyInfo(resolvedDependency)
-                projectInfo.getDependencies().add(info)
-                addedSha1s.add(sha1)
-            }
+            def info = getDependencyInfo(resolvedDependency)
+            projectInfo.getDependencies().add(info)
         }
         project.projectInfos.add(projectInfo)
     }
