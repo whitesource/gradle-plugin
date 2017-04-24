@@ -21,6 +21,7 @@ class WhitesourceConfiguration {
     File reportsDirectory
     boolean failOnRejection = true
     boolean forceUpdate = false
+    boolean forceCheckAllDependencies = false
 
     String projectToken
     Map<String, String> projectTokens = [:]
@@ -69,6 +70,10 @@ class WhitesourceConfiguration {
 
     void checkPolicies(/*String*/boolean checkPolicies) {
         this.checkPolicies = checkPolicies
+    }
+
+    void forceCheckAllDependencies(boolean forceCheckAllDependencies) {
+        this.forceCheckAllDependencies = forceCheckAllDependencies
     }
 
     void reportsDirectory(File reportsDirectory) {

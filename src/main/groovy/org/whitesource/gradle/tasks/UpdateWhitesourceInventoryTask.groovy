@@ -4,7 +4,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.TaskAction
-import org.whitesource.agent.api.dispatch.CheckPoliciesResult
+import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult
 import org.whitesource.agent.api.model.DependencyInfo
 import org.whitesource.agent.client.WhitesourceService
@@ -78,7 +78,7 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
 
     private boolean checkPolicies() {
         logger.lifecycle('Checking policies...')
-        CheckPoliciesResult result = service.checkPolicies(wssConfig.orgToken, wssConfig.productName, wssConfig.productVersion, project.projectInfos)
+        CheckPolicyComplianceResult result = service.checkPolicyCompliance(wssConfig.orgToken, wssConfig.productName, wssConfig.productVersion, project.projectInfos, wssConfig.forceCheckAllDependencies)
         if (wssConfig.reportsDirectory.exists() || wssConfig.reportsDirectory.mkdirs()) {
             logger.lifecycle('Generating policy check report')
             PolicyCheckReport report = new PolicyCheckReport(result)
