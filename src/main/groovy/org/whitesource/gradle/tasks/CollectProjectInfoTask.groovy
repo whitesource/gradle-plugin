@@ -46,14 +46,18 @@ class CollectProjectInfoTask extends DefaultTask {
     }
 
     def getDependencyInfo(ResolvedDependency dependency) {
+        def addedSha1s = new HashSet<String>()
         def dependencyInfo = new DependencyInfo()
-        def sha1 = ChecksumUtils.calculateSHA1(dependency.moduleArtifacts[0].file)
-        dependencyInfo.setGroupId(dependency.getModuleGroup())
-        dependencyInfo.setArtifactId(dependency.getModuleName())
-        dependencyInfo.setVersion(dependency.getModuleVersion())
-        dependencyInfo.setSha1(sha1)
-        dependency.getChildren().each {
-            dependencyInfo.getChildren().add(getDependencyInfo(it))
+        def sha1 = ChecksumUtils.calculateSHA1(dependency.allModuleArtifacts[0].getFile())
+        if (!addedSha1s.contains(sha1)) {
+            dependencyInfo.setGroupId(dependency.getModuleGroup())
+            dependencyInfo.setArtifactId(dependency.getModuleName())
+            dependencyInfo.setVersion(dependency.getModuleVersion())
+            dependencyInfo.setSha1(sha1)
+            addedSha1s.add(sha1)
+            dependency.getChildren().each {
+                dependencyInfo.getChildren().add(getDependencyInfo(it))
+            }
         }
         return dependencyInfo
     }
