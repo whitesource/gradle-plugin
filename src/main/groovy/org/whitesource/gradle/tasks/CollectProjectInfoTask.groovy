@@ -42,11 +42,25 @@ class CollectProjectInfoTask extends DefaultTask {
             def info = getDependencyInfo(resolvedDependency)
             projectInfo.getDependencies().add(info)
         }
+
+        configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
+            def sha1 = ChecksumUtils.calculateSHA1(file)
+            if (!addedSha1s.contains(sha1)) {
+                def dependencyInfo = new DependencyInfo()
+                dependencyInfo.setArtifactId(file.name)
+                dependencyInfo.setSystemPath(file.absolutePath)
+                dependencyInfo.setSha1(sha1)
+                projectInfo.getDependencies().add(dependencyInfo)
+                addedSha1s.add(sha1)
+            }
+        }
+
         project.projectInfos.add(projectInfo)
     }
 
+    def addedSha1s = new HashSet<String>()
+
     def getDependencyInfo(ResolvedDependency dependency) {
-        def addedSha1s = new HashSet<String>()
         def dependencyInfo = new DependencyInfo()
         def sha1 = ChecksumUtils.calculateSHA1(dependency.allModuleArtifacts[0].getFile())
         if (!addedSha1s.contains(sha1)) {
@@ -56,7 +70,10 @@ class CollectProjectInfoTask extends DefaultTask {
             dependencyInfo.setSha1(sha1)
             addedSha1s.add(sha1)
             dependency.getChildren().each {
-                dependencyInfo.getChildren().add(getDependencyInfo(it))
+                def info = getDependencyInfo(it)
+                if (info.getSha1() != null) {
+                    dependencyInfo.getChildren().add(info)
+                }
             }
         }
         return dependencyInfo
