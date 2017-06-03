@@ -1,10 +1,7 @@
 package org.whitesource.gradle.tasks
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedDependency
-import org.gradle.api.internal.artifacts.ivyservice.resolveengine.ModuleConflictResolver
-import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.tasks.TaskAction
 import org.whitesource.agent.api.ChecksumUtils
 import org.whitesource.agent.api.model.AgentProjectInfo
@@ -40,7 +37,11 @@ class CollectProjectInfoTask extends DefaultTask {
         configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
             def resolvedDependency = (ResolvedDependency) dependency
             def info = getDependencyInfo(resolvedDependency)
-            projectInfo.getDependencies().add(info)
+            if (info.getGroupId() != null || info.getArtifactId() != null || info.getVersion() != null) {
+                projectInfo.getDependencies().add(info)
+            } else {
+                logger.warn("Invalid dependency info, " + dependency.toString())
+            }
         }
 
         configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
