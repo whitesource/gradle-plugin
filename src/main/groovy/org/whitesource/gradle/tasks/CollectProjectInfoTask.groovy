@@ -37,11 +37,7 @@ class CollectProjectInfoTask extends DefaultTask {
         configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
             def resolvedDependency = (ResolvedDependency) dependency
             def info = getDependencyInfo(resolvedDependency)
-            if (info.getGroupId() != null || info.getArtifactId() != null || info.getVersion() != null) {
-                projectInfo.getDependencies().add(info)
-            } else {
-                logger.warn("Invalid dependency info, " + dependency.toString())
-            }
+            projectInfo.getDependencies().add(info)
         }
 
         configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
