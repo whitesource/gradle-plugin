@@ -1,5 +1,6 @@
 package org.whitesource.gradle.tasks
 
+import org.apache.commons.lang.StringUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.tasks.TaskAction
@@ -61,11 +62,14 @@ class CollectProjectInfoTask extends DefaultTask {
 
     def getDependencyInfo(ResolvedDependency dependency) {
         def dependencyInfo = new DependencyInfo()
-        def sha1 = ChecksumUtils.calculateSHA1(dependency.allModuleArtifacts[0].getFile())
+        def file = dependency.allModuleArtifacts[0].getFile()
+        def sha1 = ChecksumUtils.calculateSHA1(file)
         if (!addedSha1s.contains(sha1)) {
             dependencyInfo.setGroupId(dependency.getModuleGroup())
-            dependencyInfo.setArtifactId(dependency.getModuleName())
+            dependencyInfo.setArtifactId(file.getName())
             dependencyInfo.setVersion(dependency.getModuleVersion())
+            dependencyInfo.setSystemPath(file.getAbsolutePath())
+            dependencyInfo.setType(getFileExtension(file.getName()))
             dependencyInfo.setSha1(sha1)
             addedSha1s.add(sha1)
             dependency.getChildren().each {
@@ -76,5 +80,12 @@ class CollectProjectInfoTask extends DefaultTask {
             }
         }
         return dependencyInfo
+    }
+
+    private static String getFileExtension(String filename) {
+        if (StringUtils.isNotBlank(filename)) {
+            return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase()
+        }
+        return null
     }
 }
