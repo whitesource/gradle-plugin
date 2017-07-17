@@ -8,6 +8,7 @@ import org.whitesource.agent.api.ChecksumUtils
 import org.whitesource.agent.api.model.AgentProjectInfo
 import org.whitesource.agent.api.model.Coordinates
 import org.whitesource.agent.api.model.DependencyInfo
+import org.whitesource.agent.api.model.DependencyType
 import org.whitesource.gradle.WhitesourceConfiguration
 
 /**
@@ -48,6 +49,7 @@ class CollectProjectInfoTask extends DefaultTask {
             if (!addedSha1s.contains(sha1)) {
                 def dependencyInfo = new DependencyInfo()
                 dependencyInfo.setArtifactId(file.name)
+                dependencyInfo.setFilename(file.name)
                 dependencyInfo.setSystemPath(file.absolutePath)
                 dependencyInfo.setSha1(sha1)
                 projectInfo.getDependencies().add(dependencyInfo)
@@ -67,11 +69,13 @@ class CollectProjectInfoTask extends DefaultTask {
         def sha1 = ChecksumUtils.calculateSHA1(file)
         if (!addedSha1s.contains(sha1)) {
             dependencyInfo.setGroupId(dependency.getModuleGroup())
-            dependencyInfo.setArtifactId(file.getName())
+            dependencyInfo.setArtifactId(dependency.getModuleName())
             dependencyInfo.setVersion(dependency.getModuleVersion())
-            dependencyInfo.setSystemPath(file.getAbsolutePath())
             dependencyInfo.setType(artifact.getType())
             dependencyInfo.setSha1(sha1)
+            dependencyInfo.setSystemPath(file.getAbsolutePath())
+            dependencyInfo.setDependencyType(DependencyType.GRADLE)
+            dependencyInfo.setFilename(file.getName())
             addedSha1s.add(sha1)
             dependency.getChildren().each {
                 def info = getDependencyInfo(it)

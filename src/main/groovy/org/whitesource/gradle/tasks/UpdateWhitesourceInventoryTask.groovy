@@ -17,7 +17,7 @@ import org.whitesource.agent.report.PolicyCheckReport
 class UpdateWhitesourceInventoryTask extends DefaultTask {
 
     private static final String AGENT_TYPE = 'gradle-plugin'
-    private static final String AGENT_VERSION = '2.2.5'
+    private static final String AGENT_VERSION = '2.3.8'
 
     WhitesourceConfiguration wssConfig
     private WhitesourceService service
@@ -65,7 +65,7 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
     }
 
     private void createService() {
-        service = new WhitesourceService(AGENT_TYPE, AGENT_VERSION, null)
+        service = new WhitesourceService(AGENT_TYPE, AGENT_VERSION, "0.8")
         configureProxy()
     }
 
