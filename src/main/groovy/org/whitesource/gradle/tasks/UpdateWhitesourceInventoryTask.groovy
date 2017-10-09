@@ -1,7 +1,9 @@
 package org.whitesource.gradle.tasks
 
+import org.apache.commons.lang.StringUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.internal.tasks.options.Option
 import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.TaskAction
 import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult
@@ -16,36 +18,51 @@ import org.whitesource.agent.report.PolicyCheckReport
  */
 class UpdateWhitesourceInventoryTask extends DefaultTask {
 
+    /* --- Static members --- */
+
     private static final String AGENT_TYPE = 'gradle-plugin'
     private static final String AGENT_VERSION = '2.3.8'
 
-    WhitesourceConfiguration wssConfig
+    /* --- Members --- */
+
+    @Option(option = "orgToken", description = "Unique identifier of the organization to update, also known as 'API Token'.")
+    private String orgToken = null
+
+    @Option(option = "wssUrl", description = "URL to send the request to.")
+    private String serviceUrl = null
+
+    private WhitesourceConfiguration wssConfig
+
     private WhitesourceService service
+
+    /* --- Public method --- */
 
     @TaskAction
     def updateInventory() {
         try {
             debugProjectInfos()
             wssConfig = project.whitesource
-            createService()
+
+            String serviceUrl = readProperty(wssConfig.getWssUrl(), this.serviceUrl)
+            createService(serviceUrl)
 
             boolean gotPolicyRejections = false
+            String orgToken = readProperty(wssConfig.getOrgToken(), this.orgToken)
             if (wssConfig.checkPolicies) {
-                gotPolicyRejections = checkPolicies()
+                gotPolicyRejections = checkPolicies(orgToken)
             }
 
             if (!gotPolicyRejections || wssConfig.forceUpdate) {
                 if (gotPolicyRejections) {
                     logger.lifecycle('The forceUpdate flag is set to true. Updating White Source despite policy violations')
                 }
-                sendUpdate()
+                sendUpdate(orgToken)
             }
 
             if (gotPolicyRejections) {
                 String exceptionMessage = 'whitesource plugin detected policy violation'
                 throw wssConfig.failOnRejection ? new GradleException(exceptionMessage) : new StopExecutionException(exceptionMessage)
             }
-
         } catch (GradleException e) {
             throw e
         } catch (StopExecutionException e) {
@@ -64,9 +81,19 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
         }
     }
 
-    private void createService() {
-        service = new WhitesourceService(AGENT_TYPE, AGENT_VERSION, "0.8")
+    /* --- Private methods --- */
+
+    private void createService(String serviceUrl) {
+        service = new WhitesourceService(AGENT_TYPE, AGENT_VERSION, "0.9", serviceUrl)
         configureProxy()
+    }
+
+    private String readProperty(String configValue, cliValue) {
+        String value = configValue
+        if (StringUtils.isNotBlank(cliValue)) {
+            value = cliValue
+        }
+        return value
     }
 
     private void configureProxy() {
@@ -76,9 +103,9 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
         }
     }
 
-    private boolean checkPolicies() {
+    private boolean checkPolicies(String orgToken) {
         logger.lifecycle('Checking policies...')
-        CheckPolicyComplianceResult result = service.checkPolicyCompliance(wssConfig.orgToken, wssConfig.productName, wssConfig.productVersion, project.projectInfos, wssConfig.forceCheckAllDependencies)
+        CheckPolicyComplianceResult result = service.checkPolicyCompliance(orgToken, wssConfig.productName, wssConfig.productVersion, project.projectInfos, wssConfig.forceCheckAllDependencies)
         if (wssConfig.reportsDirectory.exists() || wssConfig.reportsDirectory.mkdirs()) {
             logger.lifecycle('Generating policy check report')
             PolicyCheckReport report = new PolicyCheckReport(result)
@@ -96,9 +123,9 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
         return result.hasRejections()
     }
 
-    private void sendUpdate() {
+    private void sendUpdate(orgToken) {
         logger.lifecycle('Sending updates to White Source')
-        UpdateInventoryResult result = service.update(wssConfig.orgToken, wssConfig.requesterEmail, wssConfig.productName, wssConfig.productVersion, project.projectInfos)
+        UpdateInventoryResult result = service.update(orgToken, wssConfig.requesterEmail, wssConfig.productName, wssConfig.productVersion, project.projectInfos)
         logResult(result)
     }
 
@@ -143,4 +170,15 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
         }
         logger.debug("----------------- dump finished -----------------")
     }
+
+    /* --- Getters / Setters --- */
+
+    void setOrgToken(String orgToken) {
+        this.orgToken = orgToken
+    }
+
+    void setServiceUrl(String serviceUrl) {
+        this.serviceUrl = serviceUrl
+    }
+
 }

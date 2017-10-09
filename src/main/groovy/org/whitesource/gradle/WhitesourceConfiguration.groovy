@@ -10,7 +10,7 @@ import org.gradle.api.specs.Spec
  */
 class WhitesourceConfiguration {
 
-    String orgToken
+    String orgToken = null
     String productName
     String productVersion
     Set<Project> includedProjects = []
@@ -22,6 +22,7 @@ class WhitesourceConfiguration {
     boolean failOnRejection = true
     boolean forceUpdate = false
     boolean forceCheckAllDependencies = false
+    String wssUrl = null
 
     String projectToken
     Map<String, String> projectTokens = [:]
@@ -31,6 +32,16 @@ class WhitesourceConfiguration {
 
 
     ProxyConfiguration proxyConf
+
+    /* --- Getters / Setters --- */
+
+    String getOrgToken() {
+        return this.orgToken
+    }
+
+    String getWssUrl() {
+        return this.wssUrl
+    }
 
     void orgToken(String orgToken) {
         this.orgToken = orgToken
@@ -118,6 +129,10 @@ class WhitesourceConfiguration {
 
     void failOnError(boolean failOnError) {
         this.failOnError = failOnError
+    }
+
+    void wssUrl(String wssUrl) {
+        this.wssUrl = wssUrl
     }
 }
 
