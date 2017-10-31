@@ -40,9 +40,7 @@ class CollectProjectInfoTask extends DefaultTask {
         configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
             def resolvedDependency = (ResolvedDependency) dependency
             def info = getDependencyInfo(resolvedDependency, addedSha1s)
-            if ((info.getGroupId() != null && info.getArtifactId() != null && info.getVersion() != null) || info.getSha1() != null) {
-                projectInfo.getDependencies().add(info)
-            }
+            projectInfo.getDependencies().add(info)
         }
 
         configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
