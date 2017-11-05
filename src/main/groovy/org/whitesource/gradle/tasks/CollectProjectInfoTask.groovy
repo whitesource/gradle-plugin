@@ -1,5 +1,6 @@
 package org.whitesource.gradle.tasks
 
+import org.apache.commons.lang.StringUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.tasks.TaskAction
@@ -12,6 +13,7 @@ import org.whitesource.gradle.WhitesourceConfiguration
 
 /**
  * @author Itai Marko
+ * @author raz.nitzan
  */
 class CollectProjectInfoTask extends DefaultTask {
 
@@ -19,11 +21,27 @@ class CollectProjectInfoTask extends DefaultTask {
 
     @TaskAction
     def CollectProjectInfos() {
-        logger.lifecycle("processing ${project.name}")
+        // set project names
+        String projectName = null
+        if (wssConfig.includedProjects.size() > 1) {
+            if (!wssConfig.projectNames.isEmpty()) {
+                projectName = wssConfig.projectNames.get(project.name)
+            }
+        } else {
+            projectName = wssConfig.projectName
+        }
+
+        // validate project name
+        if (StringUtils.isBlank(projectName)) {
+            projectName = project.name
+        }
+
+        logger.lifecycle("Processing project ${project.name}")
         def projectInfo = new AgentProjectInfo()
-        projectInfo.setCoordinates(new Coordinates(null, project.name, null))
-        if (project.parent)
+        projectInfo.setCoordinates(new Coordinates(null, projectName, null))
+        if (project.parent) {
             projectInfo.setParentCoordinates(new Coordinates(null, project.parent.name, null))
+        }
 
         if (wssConfig.includedProjects.size() > 1) {
             projectInfo.setProjectToken(wssConfig.projectTokens.get(project.name))

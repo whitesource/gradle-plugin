@@ -24,12 +24,13 @@ class WhitesourceConfiguration {
     boolean forceCheckAllDependencies = false
     String wssUrl = null
 
+    String projectName = null
+    Map<String, String> projectNames = [:]
     String projectToken
     Map<String, String> projectTokens = [:]
 
     String requesterEmail
     boolean failOnError = true
-
 
     ProxyConfiguration proxyConf
 
@@ -133,6 +134,14 @@ class WhitesourceConfiguration {
 
     void wssUrl(String wssUrl) {
         this.wssUrl = wssUrl
+    }
+
+    void projectName(String projectName) {
+        this.projectName = projectName
+    }
+
+    void projectNames(Map<String, String> projectNames) {
+        this.projectNames = projectNames
     }
 }
 
