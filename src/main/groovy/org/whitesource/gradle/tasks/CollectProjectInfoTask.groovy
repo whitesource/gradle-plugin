@@ -54,11 +54,14 @@ class CollectProjectInfoTask extends DefaultTask {
         }
 
         def addedSha1s = new HashSet<String>()
+        def addedNoArtifactDependencies = new HashSet<String>();
 
         configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
             def resolvedDependency = (ResolvedDependency) dependency
-            def info = getDependencyInfo(resolvedDependency, addedSha1s)
-            projectInfo.getDependencies().add(info)
+            def info = getDependencyInfo(resolvedDependency, addedSha1s, addedNoArtifactDependencies)
+            if (info != null) {
+                projectInfo.getDependencies().add(info)
+            }
         }
 
         configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
@@ -78,32 +81,42 @@ class CollectProjectInfoTask extends DefaultTask {
         project.projectInfos.add(projectInfo)
     }
 
-    def getDependencyInfo(ResolvedDependency dependency, addedSha1s) {
+    def getDependencyInfo(ResolvedDependency dependency, addedSha1s, addedNoArtifactDependencies) {
         def dependencyInfo = new DependencyInfo()
         def artifact = dependency.getModuleArtifacts()[0]
         dependencyInfo.setGroupId(dependency.getModuleGroup())
         dependencyInfo.setArtifactId(dependency.getModuleName())
         dependencyInfo.setVersion(dependency.getModuleVersion())
         dependencyInfo.setDependencyType(DependencyType.GRADLE)
+        boolean isEnteredNoArtifact = false;
         if (artifact != null) {
+            isEnteredNoArtifact = true
             def file = artifact.getFile()
             dependencyInfo.setType(artifact.getType())
             dependencyInfo.setSha1(ChecksumUtils.calculateSHA1(file))
             dependencyInfo.setSystemPath(file.getAbsolutePath())
             dependencyInfo.setFilename(file.getName())
-        } else {
+        } else if (!addedNoArtifactDependencies.contains(dependencyInfo)) {
+            isEnteredNoArtifact = true
+            addedNoArtifactDependencies.add(dependencyInfo)
             logger.warn("No resolved artifact found for " + dependency.getName())
             logger.warn("Sending GAV coordinates without Sha1...")
         }
-        if (!addedSha1s.contains(dependencyInfo.getSha1())) {
-            if (dependencyInfo.getSha1() != null) {
-                addedSha1s.add(dependencyInfo.getSha1())
+        if (!isEnteredNoArtifact) {
+            if (!addedSha1s.contains(dependencyInfo.getSha1())) {
+                if (dependencyInfo.getSha1() != null) {
+                    addedSha1s.add(dependencyInfo.getSha1())
+                }
+                dependency.getChildren().each {
+                    def info = getDependencyInfo(it, addedSha1s, addedNoArtifactDependencies)
+                    if (info != null) {
+                        dependencyInfo.getChildren().add(info)
+                    }
+                }
             }
-            dependency.getChildren().each {
-                def info = getDependencyInfo(it, addedSha1s)
-                dependencyInfo.getChildren().add(info)
-            }
+            return dependencyInfo
+        } else {
+            return null
         }
-        return dependencyInfo
     }
 }
