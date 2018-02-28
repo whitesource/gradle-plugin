@@ -2,7 +2,6 @@ package org.whitesource.gradle.tasks
 
 import org.apache.commons.lang.StringUtils
 import org.gradle.api.DefaultTask
-import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.tasks.TaskAction
 import org.whitesource.agent.api.ChecksumUtils
@@ -11,7 +10,6 @@ import org.whitesource.agent.api.model.Coordinates
 import org.whitesource.agent.api.model.DependencyInfo
 import org.whitesource.agent.api.model.DependencyType
 import org.whitesource.gradle.WhitesourceConfiguration
-
 /**
  * @author Itai Marko
  * @author raz.nitzan
@@ -60,6 +58,8 @@ class CollectProjectInfoTask extends DefaultTask {
             def resolvedDependency = (ResolvedDependency) dependency
             def info = getDependencyInfo(resolvedDependency, addedSha1s)
             if (info.getGroupId() != null || info.getArtifactId() != null || info.getVersion() != null) {
+                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - info.groupId = " + info.getGroupId());
+                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - projectInfo.getDependencies() = " + projectInfo.getDependencies());
                 projectInfo.getDependencies().add(info)
             }
         }
@@ -74,15 +74,19 @@ class CollectProjectInfoTask extends DefaultTask {
                 dependencyInfo.setSha1(sha1)
                 dependencyInfo.setDependencyType(DependencyType.GRADLE)
                 projectInfo.getDependencies().add(dependencyInfo)
+                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - addedSha1s = " + addedSha1s);
+                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - sha1 = " + sha1);
                 addedSha1s.add(sha1)
             }
         }
 
+        logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - project.projectInfos = " + project.projectInfos);
         project.projectInfos.add(projectInfo)
     }
 
     def getDependencyInfo(ResolvedDependency dependency, addedSha1s) {
         def dependencyInfo = new DependencyInfo()
+        logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependency.getAllModuleArtifacts() = " + dependency.getAllModuleArtifacts());
         def artifact = dependency.getAllModuleArtifacts()[0]
         if (artifact != null) {
             def file = artifact.getFile()
@@ -92,10 +96,14 @@ class CollectProjectInfoTask extends DefaultTask {
                 dependencyInfo.setArtifactId(dependency.getModuleName())
                 dependencyInfo.setVersion(dependency.getModuleVersion())
                 dependencyInfo.setSha1(sha1)
+                logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - addedSha1s = " + addedSha1s);
+                logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - sha1 = " + sha1);
                 addedSha1s.add(sha1)
                 dependency.getChildren().each {
                     def info = getDependencyInfo(it, addedSha1s)
                     if (info.getSha1() != null) {
+                        logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependencyInfo.getChildren() = " + dependencyInfo.getChildren());
+                        logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - info = " + info);
                         dependencyInfo.getChildren().add(info)
                     }
                 }
