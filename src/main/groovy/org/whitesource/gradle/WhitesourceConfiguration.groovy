@@ -23,6 +23,7 @@ class WhitesourceConfiguration {
     boolean forceUpdate = false
     boolean forceCheckAllDependencies = false
     String wssUrl = null
+    boolean useAndroidPlugin = false
 
     String projectName = null
     Map<String, String> projectNames = [:]
@@ -142,6 +143,10 @@ class WhitesourceConfiguration {
 
     void projectNames(Map<String, String> projectNames) {
         this.projectNames = projectNames
+    }
+
+    void useAndroidPlugin(boolean useAndroidPlugin){
+        this.useAndroidPlugin = useAndroidPlugin;
     }
 }
 

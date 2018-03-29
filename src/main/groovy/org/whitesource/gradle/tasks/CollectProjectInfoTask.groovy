@@ -2,7 +2,9 @@ package org.whitesource.gradle.tasks
 
 import org.apache.commons.lang.StringUtils
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration
 import org.gradle.api.tasks.TaskAction
 import org.whitesource.agent.api.ChecksumUtils
 import org.whitesource.agent.api.model.AgentProjectInfo
@@ -16,6 +18,7 @@ import org.whitesource.gradle.WhitesourceConfiguration
  */
 class CollectProjectInfoTask extends DefaultTask {
 
+    public static final String COMPILE_CLASSPATH = "CompileClasspath"
     WhitesourceConfiguration wssConfig = project.whitesource
 
     @TaskAction
@@ -54,29 +57,47 @@ class CollectProjectInfoTask extends DefaultTask {
 
         def addedSha1s = new HashSet<String>()
 
-        configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
-            def resolvedDependency = (ResolvedDependency) dependency
-            def info = getDependencyInfo(resolvedDependency, addedSha1s)
-            if (info.getGroupId() != null || info.getArtifactId() != null || info.getVersion() != null) {
-                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - info.groupId = " + info.getGroupId());
-                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - projectInfo.getDependencies() = " + projectInfo.getDependencies());
-                projectInfo.getDependencies().add(info)
+        if (wssConfig.useAndroidPlugin){
+            def configuration = configurationsToInclude.stream().filter({ configuration -> configuration.getName().indexOf(COMPILE_CLASSPATH) > -1 }).findFirst();
+            Set<String> files = configuration.value.getFiles();
+            files.stream().each {file ->
+                String[] path = file.path.split("\\\\");
+                int length = path.length;
+                def sha1 = path[length-2];
+                if (!addedSha1s.contains(sha1)) {
+                    def dependencyInfo = new DependencyInfo()
+                    dependencyInfo.setGroupId(path[length - 5]);
+                    dependencyInfo.setArtifactId(path[length - 4])
+                    dependencyInfo.setVersion(path[length - 3])
+                    dependencyInfo.setSha1(sha1)
+                    addedSha1s.add(sha1)
+                    projectInfo.getDependencies().add(dependencyInfo)
+                }
             }
-        }
-
-        configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
-            def sha1 = ChecksumUtils.calculateSHA1(file)
-            if (!addedSha1s.contains(sha1)) {
-                def dependencyInfo = new DependencyInfo()
-                dependencyInfo.setArtifactId(file.name)
-                dependencyInfo.setFilename(file.name)
-                dependencyInfo.setSystemPath(file.absolutePath)
-                dependencyInfo.setSha1(sha1)
-                dependencyInfo.setDependencyType(DependencyType.GRADLE)
-                projectInfo.getDependencies().add(dependencyInfo)
-                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - addedSha1s = " + addedSha1s);
-                logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - sha1 = " + sha1);
-                addedSha1s.add(sha1)
+        } else {
+            configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
+                def resolvedDependency = (ResolvedDependency) dependency
+                def info = getDependencyInfo(resolvedDependency, addedSha1s)
+                if (info.getGroupId() != null || info.getArtifactId() != null || info.getVersion() != null) {
+                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - info.groupId = " + info.getGroupId());
+                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - projectInfo.getDependencies() = " + projectInfo.getDependencies());
+                    projectInfo.getDependencies().add(info)
+                }
+            }
+            configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
+                def sha1 = ChecksumUtils.calculateSHA1(file)
+                if (!addedSha1s.contains(sha1)) {
+                    def dependencyInfo = new DependencyInfo()
+                    dependencyInfo.setArtifactId(file.name)
+                    dependencyInfo.setFilename(file.name)
+                    dependencyInfo.setSystemPath(file.absolutePath)
+                    dependencyInfo.setSha1(sha1)
+                    dependencyInfo.setDependencyType(DependencyType.GRADLE)
+                    projectInfo.getDependencies().add(dependencyInfo)
+                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - addedSha1s = " + addedSha1s);
+                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - sha1 = " + sha1);
+                    addedSha1s.add(sha1)
+                }
             }
         }
 
