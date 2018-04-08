@@ -2,9 +2,7 @@ package org.whitesource.gradle.tasks
 
 import org.apache.commons.lang.StringUtils
 import org.gradle.api.DefaultTask
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ResolvedDependency
-import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration
 import org.gradle.api.tasks.TaskAction
 import org.whitesource.agent.api.ChecksumUtils
 import org.whitesource.agent.api.model.AgentProjectInfo
@@ -12,13 +10,16 @@ import org.whitesource.agent.api.model.Coordinates
 import org.whitesource.agent.api.model.DependencyInfo
 import org.whitesource.agent.api.model.DependencyType
 import org.whitesource.gradle.WhitesourceConfiguration
+
+import java.util.stream.Stream
+
 /**
  * @author Itai Marko
  * @author raz.nitzan
  */
 class CollectProjectInfoTask extends DefaultTask {
 
-    public static final String COMPILE_CLASSPATH = "CompileClasspath"
+    public static final String CLASSPATH = "Classpath"
     WhitesourceConfiguration wssConfig = project.whitesource
 
     @TaskAction
@@ -58,20 +59,20 @@ class CollectProjectInfoTask extends DefaultTask {
         def addedSha1s = new HashSet<String>()
 
         if (wssConfig.useAndroidPlugin){
-            def configuration = configurationsToInclude.stream().filter({ configuration -> configuration.getName().indexOf(COMPILE_CLASSPATH) > -1 }).findFirst();
-            Set<String> files = configuration.value.getFiles();
-            files.stream().each {file ->
-                String[] path = file.path.split("\\\\");
-                int length = path.length;
-                def sha1 = path[length-2];
-                if (!addedSha1s.contains(sha1)) {
-                    def dependencyInfo = new DependencyInfo()
-                    dependencyInfo.setGroupId(path[length - 5]);
-                    dependencyInfo.setArtifactId(path[length - 4])
-                    dependencyInfo.setVersion(path[length - 3])
-                    dependencyInfo.setSha1(sha1)
-                    addedSha1s.add(sha1)
-                    projectInfo.getDependencies().add(dependencyInfo)
+            def files = configurationsToInclude.stream().filter({ configuration -> configuration.getName().indexOf(CLASSPATH) > -1 })*.getFiles().flatten();
+            files.stream().distinct().each {file ->
+                def sha1 = file.getParentFile();
+                if (!addedSha1s.contains(sha1.getName())){
+                    def dependencyInfo = new DependencyInfo();
+                    dependencyInfo.setSha1(sha1.getName());
+                    def version = sha1.getParentFile();
+                    dependencyInfo.setVersion(version.getName());
+                    def artifactId = version.getParentFile();
+                    dependencyInfo.setArtifactId(artifactId.getName());
+                    def groupId = artifactId.getParentFile();
+                    dependencyInfo.setGroupId(groupId.getName());
+                    addedSha1s.add(sha1);
+                    projectInfo.getDependencies().add(dependencyInfo);
                 }
             }
         } else {
