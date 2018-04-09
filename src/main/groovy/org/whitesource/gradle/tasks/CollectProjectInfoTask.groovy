@@ -19,7 +19,6 @@ import java.util.stream.Stream
  */
 class CollectProjectInfoTask extends DefaultTask {
 
-    public static final String CLASSPATH = "Classpath"
     WhitesourceConfiguration wssConfig = project.whitesource
 
     @TaskAction
@@ -52,26 +51,35 @@ class CollectProjectInfoTask extends DefaultTask {
             projectInfo.setProjectToken(wssConfig.projectToken)
         }
 
-        def configurationsToInclude = project.configurations.findAll { thisProjConf ->
-            thisProjConf.name in wssConfig.includedConfigurationNames || thisProjConf.name in wssConfig.includedConfigurations*.name
+        def configurationsToInclude = project.configurations.findAll { thisProjectConfiguration ->
+            thisProjectConfiguration.name in wssConfig.includedConfigurationNames || thisProjectConfiguration.name in wssConfig.includedConfigurations*.name
         }
 
         def addedSha1s = new HashSet<String>()
 
         if (wssConfig.useAndroidPlugin){
-            def files = configurationsToInclude.stream().filter({ configuration -> configuration.getName().indexOf(CLASSPATH) > -1 })*.getFiles().flatten();
+            // filtering out configurations without files' list
+            def files = configurationsToInclude.stream().filter({ configuration -> try { return  configuration.getFiles() != null; }
+            catch (IllegalStateException e){
+                return  false;
+            }})*.getFiles().flatten();
+            /**
+             * path\groupId\artifactId\version\sha1\filename
+             * e.g
+             * path\com.android.support.test\rules\1.0.1\afc664aefa2eb399dc8cce3e87d795fb0822a9a7\rules-1.0.1.aar
+             */
             files.stream().distinct().each {file ->
-                def sha1 = file.getParentFile();
-                if (!addedSha1s.contains(sha1.getName())){
+                def sha1Path = file.getParentFile(); // removing the file name
+                if (!addedSha1s.contains(sha1Path.getName())){
                     def dependencyInfo = new DependencyInfo();
-                    dependencyInfo.setSha1(sha1.getName());
-                    def version = sha1.getParentFile();
-                    dependencyInfo.setVersion(version.getName());
-                    def artifactId = version.getParentFile();
-                    dependencyInfo.setArtifactId(artifactId.getName());
-                    def groupId = artifactId.getParentFile();
-                    dependencyInfo.setGroupId(groupId.getName());
-                    addedSha1s.add(sha1);
+                    dependencyInfo.setSha1(sha1Path.getName());
+                    def versionPath = sha1Path.getParentFile(); // removing the sha1 value
+                    dependencyInfo.setVersion(versionPath.getName());
+                    def artifactIdPath = versionPath.getParentFile(); // removing the version
+                    dependencyInfo.setArtifactId(artifactIdPath.getName());
+                    def groupIdPath = artifactIdPath.getParentFile(); // removing the artifact id
+                    dependencyInfo.setGroupId(groupIdPath.getName());
+                    addedSha1s.add(sha1Path);
                     projectInfo.getDependencies().add(dependencyInfo);
                 }
             }

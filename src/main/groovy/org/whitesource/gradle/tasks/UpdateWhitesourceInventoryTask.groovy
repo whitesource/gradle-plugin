@@ -153,6 +153,11 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
                 logger.lifecycle("\t${projectName}")
             }
         }
+
+        String requestToken = result.getRequestToken();
+        if (StringUtils.isNotBlank(requestToken)) {
+            logger.lifecycle("Support Token: {}", requestToken);
+        }
     }
 
     private void debugProjectInfos() {
