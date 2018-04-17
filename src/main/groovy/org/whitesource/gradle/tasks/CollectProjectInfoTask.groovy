@@ -38,7 +38,7 @@ class CollectProjectInfoTask extends DefaultTask {
             projectName = project.name
         }
 
-        logger.lifecycle("Processing project ${project.name}")
+        logger.info("Processing project ${project.name}")
         def projectInfo = new AgentProjectInfo()
         projectInfo.setCoordinates(new Coordinates(null, projectName, null))
         if (project.parent) {
@@ -88,8 +88,8 @@ class CollectProjectInfoTask extends DefaultTask {
                 def resolvedDependency = (ResolvedDependency) dependency
                 def info = getDependencyInfo(resolvedDependency, addedSha1s)
                 if (info.getGroupId() != null || info.getArtifactId() != null || info.getVersion() != null) {
-                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - info.groupId = " + info.getGroupId());
-                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - projectInfo.getDependencies() = " + projectInfo.getDependencies());
+                    logger.debug("CollectProjectInfoTask:CollectProjectInfos - info.groupId = " + info.getGroupId());
+                    logger.debug("CollectProjectInfoTask:CollectProjectInfos - projectInfo.getDependencies() = " + projectInfo.getDependencies());
                     projectInfo.getDependencies().add(info)
                 }
             }
@@ -103,20 +103,20 @@ class CollectProjectInfoTask extends DefaultTask {
                     dependencyInfo.setSha1(sha1)
                     dependencyInfo.setDependencyType(DependencyType.GRADLE)
                     projectInfo.getDependencies().add(dependencyInfo)
-                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - addedSha1s = " + addedSha1s);
-                    logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - sha1 = " + sha1);
+                    logger.debug("CollectProjectInfoTask:CollectProjectInfos - addedSha1s = " + addedSha1s);
+                    logger.debug("CollectProjectInfoTask:CollectProjectInfos - sha1 = " + sha1);
                     addedSha1s.add(sha1)
                 }
             }
         }
 
-        logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - project.projectInfos = " + project.projectInfos);
+        logger.debug("CollectProjectInfoTask:CollectProjectInfos - project.projectInfos = " + project.projectInfos);
         project.projectInfos.add(projectInfo)
     }
 
     def getDependencyInfo(ResolvedDependency dependency, addedSha1s) {
         def dependencyInfo = new DependencyInfo()
-        logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependency.getAllModuleArtifacts() = " + dependency.getAllModuleArtifacts());
+        logger.debug("CollectProjectInfoTask:getDependencyInfo - dependency.getAllModuleArtifacts() = " + dependency.getAllModuleArtifacts());
         def artifact = dependency.getAllModuleArtifacts()[0]
         if (artifact != null) {
             def file = artifact.getFile()
@@ -126,14 +126,14 @@ class CollectProjectInfoTask extends DefaultTask {
                 dependencyInfo.setArtifactId(dependency.getModuleName())
                 dependencyInfo.setVersion(dependency.getModuleVersion())
                 dependencyInfo.setSha1(sha1)
-                logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - addedSha1s = " + addedSha1s);
-                logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - sha1 = " + sha1);
+                logger.debug("CollectProjectInfoTask:getDependencyInfo - addedSha1s = " + addedSha1s);
+                logger.debug("CollectProjectInfoTask:getDependencyInfo - sha1 = " + sha1);
                 addedSha1s.add(sha1)
                 dependency.getChildren().each {
                     def info = getDependencyInfo(it, addedSha1s)
                     if (info.getSha1() != null) {
-                        logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependencyInfo.getChildren() = " + dependencyInfo.getChildren());
-                        logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - info = " + info);
+                        logger.debug("CollectProjectInfoTask:getDependencyInfo - dependencyInfo.getChildren() = " + dependencyInfo.getChildren());
+                        logger.debug("CollectProjectInfoTask:getDependencyInfo - info = " + info);
                         dependencyInfo.getChildren().add(info)
                     }
                 }

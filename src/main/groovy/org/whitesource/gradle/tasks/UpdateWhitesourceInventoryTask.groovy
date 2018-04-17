@@ -54,7 +54,7 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
 
             if (!gotPolicyRejections || wssConfig.forceUpdate) {
                 if (gotPolicyRejections) {
-                    logger.lifecycle('The forceUpdate flag is set to true. Updating White Source despite policy violations')
+                    logger.info('The forceUpdate flag is set to true. Updating White Source despite policy violations')
                 }
                 sendUpdate(orgToken)
             }
@@ -104,59 +104,59 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
     }
 
     private boolean checkPolicies(String orgToken) {
-        logger.lifecycle('Checking policies...')
+        logger.info('Checking policies...')
         CheckPolicyComplianceResult result = service.checkPolicyCompliance(orgToken, wssConfig.productName, wssConfig.productVersion, project.projectInfos, wssConfig.forceCheckAllDependencies)
         if (wssConfig.reportsDirectory.exists() || wssConfig.reportsDirectory.mkdirs()) {
-            logger.lifecycle('Generating policy check report')
+            logger.info('Generating policy check report')
             PolicyCheckReport report = new PolicyCheckReport(result)
             report.generate(wssConfig.reportsDirectory, false)
         } else {
-            logger.lifecycle("Failed to create outputdirectory ${wssConfig.reportsDirectory}. Skipping policies check report.")
+            logger.info("Failed to create outputdirectory ${wssConfig.reportsDirectory}. Skipping policies check report.")
         }
 
         if (result.hasRejections()) {
             logger.error("Some dependencies were rejected by the organization's policies. See policy check report at ${wssConfig.reportsDirectory}")
         } else {
-            logger.lifecycle("All dependencies conform with the organization's policies.")
+            logger.info("All dependencies conform with the organization's policies.")
         }
 
         return result.hasRejections()
     }
 
     private void sendUpdate(orgToken) {
-        logger.lifecycle('Sending updates to White Source')
+        logger.info('Sending updates to White Source')
         UpdateInventoryResult result = service.update(orgToken, wssConfig.requesterEmail, wssConfig.productName, wssConfig.productVersion, project.projectInfos)
         logResult(result)
     }
 
     private void logResult(UpdateInventoryResult result) {
-        logger.lifecycle("Inventory update results for ${result.getOrganization()}")
+        logger.info("Inventory update results for ${result.getOrganization()}")
 
         // newly created projects
         Collection<String> createdProjects = result.getCreatedProjects()
         if (createdProjects.isEmpty()) {
-            logger.lifecycle('No new projects found.')
+            logger.info('No new projects found.')
         } else {
-            logger.lifecycle('Newly created projects:')
+            logger.info('Newly created projects:')
             for (String projectName : createdProjects) {
-                logger.lifecycle("\t${projectName}")
+                logger.info("\t${projectName}")
             }
         }
 
         // updated projects
         Collection<String> updatedProjects = result.getUpdatedProjects()
         if (updatedProjects.isEmpty()) {
-            logger.lifecycle('No projects were updated.')
+            logger.info('No projects were updated.')
         } else {
-            logger.lifecycle('Updated projects:')
+            logger.info('Updated projects:')
             for (String projectName : updatedProjects) {
-                logger.lifecycle("\t${projectName}")
+                logger.info("\t${projectName}")
             }
         }
 
         String requestToken = result.getRequestToken();
         if (StringUtils.isNotBlank(requestToken)) {
-            logger.lifecycle("Support Token: {}", requestToken);
+            logger.info("Support Token: {}", requestToken);
         }
     }
 
