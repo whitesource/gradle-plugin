@@ -18,6 +18,16 @@ class WhitesourcePlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
+        // create extension objects
+        def wssConfig = project.extensions.create('whitesource', WhitesourceConfiguration)
+        project.whitesource.extensions.create('proxy', ProxyConfiguration)
+
+        // create an updateWhitesource task for the root project
+        Task uwi = project.tasks.create(name: 'updateWhitesource', type: UpdateWhitesourceInventoryTask) {
+            description = 'Sends WhiteSource an update of the libraries being used by each project'
+            group = 'whitesource'
+        }
+
         project.configure(project) {
             project.ext {
                 projectInfos = []
@@ -44,10 +54,6 @@ class WhitesourcePlugin implements Plugin<Project> {
                         }
             }
 
-            // create extension objects
-            def wssConfig = project.extensions.create('whitesource', WhitesourceConfiguration)
-            project.whitesource.extensions.create('proxy', ProxyConfiguration)
-
             afterEvaluate {
                 //set defaults
                 wssConfig.productName = wssConfig.productName ?: rootProject.name
@@ -66,19 +72,12 @@ class WhitesourcePlugin implements Plugin<Project> {
                 // create a collectProjectInfo task for each of the included projects
                 def collectProjectInfoTaskName = 'collectProjectInfo'
                 configure (wssConfig.includedProjects) {
-                    tasks.create(name: collectProjectInfoTaskName, type: CollectProjectInfoTask) {
+                    def cpi = tasks.create(name: collectProjectInfoTaskName, type: CollectProjectInfoTask) {
+                        description = 'Checks the libraries being used against the organizational policies'
                         group = 'whitesource'
                     }
-                }
-
-                // create an updateWhitesource task for the root project
-                Task uwi = tasks.create(name: 'updateWhitesource', type: UpdateWhitesourceInventoryTask) {
-                    group = 'whitesource'
-                }
-
-                // set the updateWhitesource task to depend on each collectProjectInfo task created
-                uwi.dependsOn wssConfig.includedProjects.collect {
-                    it.tasks.findByName(collectProjectInfoTaskName)
+                    // set the updateWhitesource task to depend on each collectProjectInfo task created
+                    uwi.dependsOn cpi
                 }
             }
         }
