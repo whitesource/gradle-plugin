@@ -1,22 +1,12 @@
+plugins {
+    id 'com.gradle.plugin-publish' version '0.9.10'
+}
 
 apply plugin: 'groovy'
 apply plugin: 'maven'
-apply plugin: 'signing'
-apply plugin: 'io.codearte.nexus-staging'
 
 group = 'org.whitesource'
 version = '18.3.2'
-
-buildscript {
-    repositories {
-        mavenCentral()
-        //Needed only for SNAPSHOT versions
-        //maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
-    }
-    dependencies {
-        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.8.0"
-    }
-}
 
 repositories {
     mavenLocal()
@@ -46,55 +36,16 @@ artifacts {
     archives javadocJar
 }
 
-signing {
-    sign configurations.archives
-}
+pluginBundle {
+    website = 'https://www.whitesourcesoftware.com/'
+    vcsUrl = 'https://github.com/whitesource/gradle-plugin'
+    description = 'Gradle plugin to send open source software usage updates to WhiteSource.'
+    tags = ['whitesource', 'security']
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'WhiteSource Gradle Plugin'
-                packaging 'jar'
-                description 'Gradle plugin to send open source software usage updates to WhiteSource.'
-                url 'https://github.com/whitesource/gradle-plugin'
-
-                scm {
-                    connection 'scm:git:git@github.com:whitesource/gradle-plugin.git'
-                    developerConnection 'scm:git:git@github.com:whitesource/gradle-plugin.git'
-                    url 'https://github.com/whitesource/gradle-plugin.git'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'itai.marko'
-                        name 'Itai.Marko'
-                        email 'itai.marko@whitesourcesoftware.com'
-                    }
-                    developer {
-                        id 'alex.maybaum'
-                        name 'Alex.Maybaum'
-                        email 'alex.maybaum@whitesourcesoftware.com'
-                    }
-                }
-            }
+    plugins {
+        whitesource {
+            id = 'org.whitesource.whitesource-gradle-plugin'
+            displayName = 'WhiteSource Gradle Plugin'
         }
     }
 }
