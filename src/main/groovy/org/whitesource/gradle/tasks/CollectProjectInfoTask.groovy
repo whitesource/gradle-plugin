@@ -51,8 +51,13 @@ class CollectProjectInfoTask extends DefaultTask {
             projectInfo.setProjectToken(wssConfig.projectToken)
         }
 
-        def configurationsToInclude = project.configurations.findAll { thisProjectConfiguration ->
-            thisProjectConfiguration.name in wssConfig.includedConfigurationNames || thisProjectConfiguration.name in wssConfig.includedConfigurations*.name
+        def configurationsToInclude
+        if (wssConfig.includedConfigurations.isEmpty()) {
+            configurationsToInclude = project.configurations.findAll { thisProjectConfiguration ->
+                thisProjectConfiguration.name in wssConfig.includedConfigurationNames
+            }
+        } else {
+            configurationsToInclude = wssConfig.includedConfigurations        
         }
 
         def addedSha1s = new HashSet<String>()
