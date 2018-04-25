@@ -125,8 +125,21 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
 
     private void sendUpdate(orgToken) {
         logger.lifecycle('Sending updates to White Source')
-        UpdateInventoryResult result = service.update(orgToken, wssConfig.requesterEmail, wssConfig.productName, wssConfig.productVersion, project.projectInfos)
-        logResult(result)
+        int retries = wssConfig.connectionRetries
+        while (retries-- > -1) {
+            try {
+                UpdateInventoryResult result = service.update(orgToken, wssConfig.requesterEmail, wssConfig.productName, wssConfig.productVersion, project.projectInfos)
+                logResult(result)
+                retries = -1
+            } catch (Exception e) {
+                logger.lifecycle(e.getMessage());
+                if (retries > -1) {
+                    Thread.sleep(wssConfig.connectionRetriesInterval);
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     private void logResult(UpdateInventoryResult result) {

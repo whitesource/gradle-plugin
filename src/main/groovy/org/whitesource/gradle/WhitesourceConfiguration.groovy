@@ -24,6 +24,8 @@ class WhitesourceConfiguration {
     boolean forceCheckAllDependencies = false
     String wssUrl = null
     boolean useAndroidPlugin = false
+    int connectionRetries = 1
+    int connectionRetriesInterval = 3000
 
     String projectName = null
     Map<String, String> projectNames = [:]
@@ -147,6 +149,14 @@ class WhitesourceConfiguration {
 
     void useAndroidPlugin(boolean useAndroidPlugin){
         this.useAndroidPlugin = useAndroidPlugin;
+    }
+
+    void connectionRetries(int connectionRetries){
+        this.connectionRetries = connectionRetries;
+    }
+
+    void connectionRetriesInterval(int connectionRetriesInterval){
+        this.connectionRetriesInterval = connectionRetriesInterval;
     }
 }
 
