@@ -27,6 +27,7 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
 
     @Option(option = "orgToken", description = "Unique identifier of the organization to update, also known as 'API Token'.")
     private String orgToken = null
+    private String userToken = null
 
     @Option(option = "wssUrl", description = "URL to send the request to.")
     private String serviceUrl = null
@@ -48,15 +49,16 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
 
             boolean gotPolicyRejections = false
             String orgToken = readProperty(wssConfig.getOrgToken(), this.orgToken)
+            String userToken = readProperty(wssConfig.getUserToken(), this.userToken);
             if (wssConfig.checkPolicies) {
-                gotPolicyRejections = checkPolicies(orgToken)
+                gotPolicyRejections = checkPolicies(orgToken, userToken)
             }
 
             if (!gotPolicyRejections || wssConfig.forceUpdate) {
                 if (gotPolicyRejections) {
                     logger.lifecycle('The forceUpdate flag is set to true. Updating White Source despite policy violations')
                 }
-                sendUpdate(orgToken)
+                sendUpdate(orgToken, userToken)
             }
 
             if (gotPolicyRejections) {
@@ -103,9 +105,9 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
         }
     }
 
-    private boolean checkPolicies(String orgToken) {
+    private boolean checkPolicies(String orgToken, String userToken) {
         logger.lifecycle('Checking policies...')
-        CheckPolicyComplianceResult result = service.checkPolicyCompliance(orgToken, wssConfig.productName, wssConfig.productVersion, project.projectInfos, wssConfig.forceCheckAllDependencies)
+        CheckPolicyComplianceResult result = service.checkPolicyCompliance(orgToken, wssConfig.productName, wssConfig.productVersion, project.projectInfos, wssConfig.forceCheckAllDependencies, userToken)
         if (wssConfig.reportsDirectory.exists() || wssConfig.reportsDirectory.mkdirs()) {
             logger.lifecycle('Generating policy check report')
             PolicyCheckReport report = new PolicyCheckReport(result)
@@ -123,12 +125,12 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
         return result.hasRejections()
     }
 
-    private void sendUpdate(orgToken) {
+    private void sendUpdate(orgToken, userToken) {
         logger.lifecycle('Sending updates to White Source')
         int retries = wssConfig.connectionRetries
         while (retries-- > -1) {
             try {
-                UpdateInventoryResult result = service.update(orgToken, wssConfig.requesterEmail, wssConfig.productName, wssConfig.productVersion, project.projectInfos)
+                UpdateInventoryResult result = service.update(orgToken, wssConfig.requesterEmail, wssConfig.productName, wssConfig.productVersion, project.projectInfos, userToken)
                 logResult(result)
                 retries = -1
             } catch (Exception e) {

@@ -11,6 +11,7 @@ import org.gradle.api.specs.Spec
 class WhitesourceConfiguration {
 
     String orgToken = null
+    String userToken = null
     String productName
     String productVersion
     Set<Project> includedProjects = []
@@ -43,12 +44,20 @@ class WhitesourceConfiguration {
         return this.orgToken
     }
 
+    String getUserToken(){
+        return this.userToken
+    }
+
     String getWssUrl() {
         return this.wssUrl
     }
 
     void orgToken(String orgToken) {
         this.orgToken = orgToken
+    }
+
+    void userToken(String userToken){
+        this.userToken = userToken;
     }
 
     void productName(String productName) {
