@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.tasks.TaskAction
-import org.whitesource.agent.api.ChecksumUtils
+import org.whitesource.agent.hash.ChecksumUtils
 import org.whitesource.agent.api.model.AgentProjectInfo
 import org.whitesource.agent.api.model.Coordinates
 import org.whitesource.agent.api.model.DependencyInfo

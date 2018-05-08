@@ -11,6 +11,7 @@ import org.gradle.api.specs.Spec
 class WhitesourceConfiguration {
 
     String orgToken = null
+    String userToken = null
     String productName
     String productVersion
     Set<Project> includedProjects = []
@@ -24,6 +25,8 @@ class WhitesourceConfiguration {
     boolean forceCheckAllDependencies = false
     String wssUrl = null
     boolean useAndroidPlugin = false
+    int connectionRetries = 1
+    int connectionRetriesInterval = 3000
 
     String projectName = null
     Map<String, String> projectNames = [:]
@@ -41,12 +44,20 @@ class WhitesourceConfiguration {
         return this.orgToken
     }
 
+    String getUserToken(){
+        return this.userToken
+    }
+
     String getWssUrl() {
         return this.wssUrl
     }
 
     void orgToken(String orgToken) {
         this.orgToken = orgToken
+    }
+
+    void userToken(String userToken){
+        this.userToken = userToken;
     }
 
     void productName(String productName) {
@@ -147,6 +158,14 @@ class WhitesourceConfiguration {
 
     void useAndroidPlugin(boolean useAndroidPlugin){
         this.useAndroidPlugin = useAndroidPlugin;
+    }
+
+    void connectionRetries(int connectionRetries){
+        this.connectionRetries = connectionRetries;
+    }
+
+    void connectionRetriesInterval(int connectionRetriesInterval){
+        this.connectionRetriesInterval = connectionRetriesInterval;
     }
 }
 
