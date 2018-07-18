@@ -68,7 +68,7 @@ class CollectProjectInfoTask extends DefaultTask {
              * e.g
              * path\com.android.support.test\rules\1.0.1\afc664aefa2eb399dc8cce3e87d795fb0822a9a7\rules-1.0.1.aar
              */
-            files.stream().distinct().each {file ->
+            files.stream().distinct().each { file ->
                 def sha1Path = file.getParentFile(); // removing the file name
                 if (!addedSha1s.contains(sha1Path.getName())){
                     def dependencyInfo = new DependencyInfo();
@@ -117,27 +117,32 @@ class CollectProjectInfoTask extends DefaultTask {
     def getDependencyInfo(ResolvedDependency dependency, addedSha1s) {
         def dependencyInfo = new DependencyInfo()
         //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependency.getAllModuleArtifacts() = " + dependency.getAllModuleArtifacts());
-        def artifact = dependency.getAllModuleArtifacts()[0]
-        if (artifact != null) {
-            def file = artifact.getFile()
-            def sha1 = ChecksumUtils.calculateSHA1(file)
-            if (!addedSha1s.contains(sha1)) {
-                dependencyInfo.setGroupId(dependency.getModuleGroup())
-                dependencyInfo.setArtifactId(dependency.getModuleName())
-                dependencyInfo.setVersion(dependency.getModuleVersion())
-                dependencyInfo.setSha1(sha1)
-                //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - addedSha1s = " + addedSha1s);
-                //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - sha1 = " + sha1);
-                addedSha1s.add(sha1)
-                dependency.getChildren().each {
-                    def info = getDependencyInfo(it, addedSha1s)
-                    if (info.getSha1() != null) {
-                        //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependencyInfo.getChildren() = " + dependencyInfo.getChildren());
-                        //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - info = " + info);
-                        dependencyInfo.getChildren().add(info)
+        try {
+            def artifact = dependency.getAllModuleArtifacts()[0]
+            if (artifact != null) {
+                def file = artifact.getFile()
+                def sha1 = ChecksumUtils.calculateSHA1(file)
+                if (!addedSha1s.contains(sha1)) {
+                    dependencyInfo.setGroupId(dependency.getModuleGroup())
+                    dependencyInfo.setArtifactId(dependency.getModuleName())
+                    dependencyInfo.setVersion(dependency.getModuleVersion())
+                    dependencyInfo.setSha1(sha1)
+                    //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - addedSha1s = " + addedSha1s);
+                    //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - sha1 = " + sha1);
+                    addedSha1s.add(sha1)
+                    dependency.getChildren().each {
+                        def info = getDependencyInfo(it, addedSha1s)
+                        if (info.getSha1() != null) {
+                            //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependencyInfo.getChildren() = " + dependencyInfo.getChildren());
+                            //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - info = " + info);
+                            dependencyInfo.getChildren().add(info)
+                        }
                     }
                 }
             }
+        } catch (Exception e){
+            logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage());
+            logger.debug("stack trace: ", e.printStackTrace())
         }
         return dependencyInfo
     }
