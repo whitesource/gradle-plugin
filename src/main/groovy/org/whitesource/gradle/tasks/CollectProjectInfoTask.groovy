@@ -23,7 +23,7 @@ class CollectProjectInfoTask extends DefaultTask {
 
     @TaskAction
     def CollectProjectInfos() {
-        logger.lifecycle(" >>>> WhiteSource Gradle Plugin version 18.7.1.2-SNAPSHOT <<<<")
+        logger.lifecycle(" >>>> WhiteSource Gradle Plugin version 18.7.1.3-SNAPSHOT <<<<")
         // set project names
         String projectName = null
         if (wssConfig.includedProjects.size() > 1) {
@@ -57,7 +57,6 @@ class CollectProjectInfoTask extends DefaultTask {
         }
 
         def addedSha1s = new HashSet<String>()
-        logger.lifecycle("CollectProjectInfos " + wssConfig.useAndroidPlugin)
         if (wssConfig.useAndroidPlugin){
             // filtering out configurations without files' list
             def files = configurationsToInclude.stream().filter({ configuration -> try { return  configuration.getFiles() != null; }
@@ -116,12 +115,10 @@ class CollectProjectInfoTask extends DefaultTask {
     }
 
     def getDependencyInfo(ResolvedDependency dependency, addedSha1s) {
-        logger.lifecycle("getDependencyInfo: " + dependency.getName())
         def dependencyInfo = new DependencyInfo()
         try {
             def artifact = dependency.getAllModuleArtifacts()[0]
             if (artifact != null) {
-                logger.lifecycle("found artifact: " + artifact.getName())
                 def file = artifact.getFile()
                 def sha1 = ChecksumUtils.calculateSHA1(file)
                 if (!addedSha1s.contains(sha1)) {
@@ -144,9 +141,9 @@ class CollectProjectInfoTask extends DefaultTask {
             } else {
                 logger.lifecycle("can't find artifact")
             }
-        } catch (Exception e){
+        } catch (Error e){
             logger.lifecycle("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage());
-            logger.lifecycle("stack trace: ", e.printStackTrace())
+            logger.debug("stack trace: ", e.printStackTrace())
         }
         return dependencyInfo
     }
