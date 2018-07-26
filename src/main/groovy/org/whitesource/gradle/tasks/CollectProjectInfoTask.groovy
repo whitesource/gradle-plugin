@@ -140,7 +140,7 @@ class CollectProjectInfoTask extends DefaultTask {
                     }
                 }
             }
-        } catch (Exception e){
+        } catch (Error e){
             logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage());
             logger.debug("stack trace: ", e.printStackTrace())
         }
