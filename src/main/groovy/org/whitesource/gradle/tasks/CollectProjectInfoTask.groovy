@@ -11,8 +11,6 @@ import org.whitesource.agent.api.model.DependencyInfo
 import org.whitesource.agent.api.model.DependencyType
 import org.whitesource.gradle.WhitesourceConfiguration
 
-import java.util.stream.Stream
-
 /**
  * @author Itai Marko
  * @author raz.nitzan
@@ -141,8 +139,8 @@ class CollectProjectInfoTask extends DefaultTask {
                 }
             }
         } catch (Error e){
-            logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage());
-            logger.debug("stack trace: ", e.printStackTrace())
+            logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage())
+            logger.debug("stack trace: {}", e.getStackTrace())
         }
         return dependencyInfo
     }
