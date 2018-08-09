@@ -11,8 +11,6 @@ import org.whitesource.agent.api.model.DependencyInfo
 import org.whitesource.agent.api.model.DependencyType
 import org.whitesource.gradle.WhitesourceConfiguration
 
-import java.util.stream.Stream
-
 /**
  * @author Itai Marko
  * @author raz.nitzan
@@ -57,6 +55,7 @@ class CollectProjectInfoTask extends DefaultTask {
         }
 
         def addedSha1s = new HashSet<String>()
+
         if (wssConfig.useAndroidPlugin){
             // filtering out configurations without files' list
             def files = configurationsToInclude.stream().filter({ configuration -> try { return  configuration.getFiles() != null; }
@@ -142,8 +141,8 @@ class CollectProjectInfoTask extends DefaultTask {
                 logger.lifecycle("can't find artifact")
             }
         } catch (Error e){
-            logger.lifecycle("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage());
-            logger.debug("stack trace: ", e.printStackTrace())
+            logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage())
+            logger.debug("stack trace: {}", e.getStackTrace())
         }
         return dependencyInfo
     }
