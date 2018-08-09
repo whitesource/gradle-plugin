@@ -21,7 +21,6 @@ class CollectProjectInfoTask extends DefaultTask {
 
     @TaskAction
     def CollectProjectInfos() {
-        logger.lifecycle(" >>>> WhiteSource Gradle Plugin version 18.7.1.3-SNAPSHOT <<<<")
         // set project names
         String projectName = null
         if (wssConfig.includedProjects.size() > 1) {
