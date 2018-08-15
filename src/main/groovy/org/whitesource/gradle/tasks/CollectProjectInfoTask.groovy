@@ -114,7 +114,6 @@ class CollectProjectInfoTask extends DefaultTask {
 
     def getDependencyInfo(ResolvedDependency dependency, addedSha1s) {
         def dependencyInfo = new DependencyInfo()
-        //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependency.getAllModuleArtifacts() = " + dependency.getAllModuleArtifacts());
         try {
             def artifact = dependency.getAllModuleArtifacts()[0]
             if (artifact != null) {
@@ -137,6 +136,8 @@ class CollectProjectInfoTask extends DefaultTask {
                         }
                     }
                 }
+            } else {
+                logger.lifecycle("can't find artifact")
             }
         } catch (Error e){
             logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage())
