@@ -86,7 +86,7 @@ class UpdateWhitesourceInventoryTask extends DefaultTask {
     /* --- Private methods --- */
 
     private void createService(String serviceUrl) {
-        service = new WhitesourceService(AGENT_TYPE, AGENT_VERSION, "17.11.3", serviceUrl)
+        service = new WhitesourceService(AGENT_TYPE, AGENT_VERSION, "18.8.1", serviceUrl)
         configureProxy()
     }
 
