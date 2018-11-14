@@ -5,7 +5,7 @@ apply plugin: 'signing'
 apply plugin: 'io.codearte.nexus-staging'
 
 group = 'org.whitesource'
-version = '18.8.1'
+version = '18.10.3'
 
 buildscript {
     repositories {

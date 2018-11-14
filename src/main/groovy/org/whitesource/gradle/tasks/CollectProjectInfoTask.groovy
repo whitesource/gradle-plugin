@@ -84,16 +84,18 @@ class CollectProjectInfoTask extends DefaultTask {
         } else {
             configurationsToInclude*.resolvedConfiguration*.getFirstLevelModuleDependencies(wssConfig.dependencyFilter).flatten().each { dependency ->
                 def resolvedDependency = (ResolvedDependency) dependency
-                def info = getDependencyInfo(resolvedDependency, addedSha1s)
+                def info = getDependencyInfo(resolvedDependency, addedSha1s, 1)
                 if (info.getGroupId() != null || info.getArtifactId() != null || info.getVersion() != null) {
                     logger.info("CollectProjectInfoTask:CollectProjectInfos - info.groupId = " + info.getGroupId());
-                    //logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - projectInfo.getDependencies() = " + projectInfo.getDependencies());
                     projectInfo.getDependencies().add(info)
+                } else {
+                    logger.debug("CollectProjectInfoTask:CollectProjectInfos - didn't add " + info.getGroupId() + "." + info.getArtifactId() + ":" + info.getVersion())
                 }
             }
             configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
                 def sha1 = ChecksumUtils.calculateSHA1(file)
                 if (!addedSha1s.contains(sha1)) {
+                    logger.debug("adding " + file.name + " without groupId")
                     def dependencyInfo = new DependencyInfo()
                     dependencyInfo.setArtifactId(file.name)
                     dependencyInfo.setFilename(file.name)
@@ -101,18 +103,17 @@ class CollectProjectInfoTask extends DefaultTask {
                     dependencyInfo.setSha1(sha1)
                     dependencyInfo.setDependencyType(DependencyType.GRADLE)
                     projectInfo.getDependencies().add(dependencyInfo)
-                    //logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - addedSha1s = " + addedSha1s);
-                    //logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - sha1 = " + sha1);
                     addedSha1s.add(sha1)
                 }
             }
         }
 
-        //logger.lifecycle("CollectProjectInfoTask:CollectProjectInfos - project.projectInfos = " + project.projectInfos);
         project.projectInfos.add(projectInfo)
     }
 
-    def getDependencyInfo(ResolvedDependency dependency, addedSha1s) {
+    def getDependencyInfo(ResolvedDependency dependency, addedSha1s, level) {
+        logger.debug("getDependencyInfo: level = " + level +", dependency.name = " + dependency.getName())
+        level++
         def dependencyInfo = new DependencyInfo()
         try {
             def artifact = dependency.getAllModuleArtifacts()[0]
@@ -124,20 +125,16 @@ class CollectProjectInfoTask extends DefaultTask {
                     dependencyInfo.setArtifactId(dependency.getModuleName())
                     dependencyInfo.setVersion(dependency.getModuleVersion())
                     dependencyInfo.setSha1(sha1)
-                    //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - addedSha1s = " + addedSha1s);
-                    //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - sha1 = " + sha1);
                     addedSha1s.add(sha1)
                     dependency.getChildren().each {
-                        def info = getDependencyInfo(it, addedSha1s)
+                        def info = getDependencyInfo(it, addedSha1s, level)
                         if (info.getSha1() != null) {
-                            //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - dependencyInfo.getChildren() = " + dependencyInfo.getChildren());
-                            //logger.lifecycle("CollectProjectInfoTask:getDependencyInfo - info = " + info);
                             dependencyInfo.getChildren().add(info)
                         }
                     }
                 }
             } else {
-                logger.lifecycle("can't find artifact")
+                logger.debug("can't find artifact of " + dependency.getName())
             }
         } catch (Error e){
             logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage())
