@@ -89,13 +89,13 @@ class CollectProjectInfoTask extends DefaultTask {
                     logger.info("CollectProjectInfoTask:CollectProjectInfos - info.groupId = " + info.getGroupId());
                     projectInfo.getDependencies().add(info)
                 } else {
-                    logger.info("CollectProjectInfoTask:CollectProjectInfos - didn't add " + info.getGroupId() + "." + info.getArtifactId() + ":" + info.getVersion())
+                    logger.debug("CollectProjectInfoTask:CollectProjectInfos - didn't add " + info.getGroupId() + "." + info.getArtifactId() + ":" + info.getVersion())
                 }
             }
             configurationsToInclude*.resolvedConfiguration*.getFiles(wssConfig.dependencyFilter).flatten().each { file ->
                 def sha1 = ChecksumUtils.calculateSHA1(file)
                 if (!addedSha1s.contains(sha1)) {
-                    logger.info("adding " + file.name + " without groupId")
+                    logger.debug("adding " + file.name + " without groupId")
                     def dependencyInfo = new DependencyInfo()
                     dependencyInfo.setArtifactId(file.name)
                     dependencyInfo.setFilename(file.name)
@@ -112,7 +112,7 @@ class CollectProjectInfoTask extends DefaultTask {
     }
 
     def getDependencyInfo(ResolvedDependency dependency, addedSha1s, level) {
-        logger.info("getDependencyInfo: level = " + level +", dependency.name = " + dependency.getName())
+        logger.debug("getDependencyInfo: level = " + level +", dependency.name = " + dependency.getName())
         level++
         def dependencyInfo = new DependencyInfo()
         try {
@@ -134,7 +134,7 @@ class CollectProjectInfoTask extends DefaultTask {
                     }
                 }
             } else {
-                logger.lifecycle("can't find artifact of " + dependency.getName())
+                logger.debug("can't find artifact of " + dependency.getName())
             }
         } catch (Error e){
             logger.warn("Can't get dependency " + dependency.getName() + " module artifacts.  Error message: " + e.getMessage())
